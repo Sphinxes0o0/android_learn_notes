@@ -172,17 +172,204 @@ ENUM_ENTRY =
 
 
 
-
-
-
-
 ## 接口和软件包
 
+HIDL 是围绕接口进行编译的，接口是面向对象的语言使用的一种用来定义行为的抽象类型。每个接口都是软件包的一部分。
 
+
+
+### 软件包
+
+软件包名称可以具有子级，例如 `package.subpackage`。已发布的 HIDL 软件包的根目录是 `hardware/interfaces` 或 `vendor/vendorName`（例如 Pixel 设备为 `vendor/google`）。软件包名称在根目录下形成一个或多个子目录；定义软件包的所有文件都位于同一目录下。例如，`package android.hardware.example.extension.light@2.0` 可以在 `hardware/interfaces/example/extension/light/2.0` 下找到。
+
+下表列出了软件包前缀和位置：
+
+| 软件包前缀             | 位置                               | 接口类型         |
+| :--------------------- | :--------------------------------- | :--------------- |
+| `android.hardware.*`   | `hardware/interfaces/*`            | HAL              |
+| `android.frameworks.*` | `frameworks/hardware/interfaces/*` | frameworks/ 相关 |
+| `android.system.*`     | `system/hardware/interfaces/*`     | system/ 相关     |
+| `android.hidl.*`       | `system/libhidl/transport/*`       | core             |
+
+软件包目录中包含扩展名为 `.hal` 的文件。每个文件均必须包含一个指定文件所属的软件包和版本的 `package` 语句。文件 `types.hal`（如果存在）并不定义接口，而是定义软件包中每个接口可以访问的数据类型。
+
+### 接口定义
+
+除了 `types.hal` 之外，其他 `.hal` 文件均定义一个接口。接口通常定义如下：
+
+```c++
+interface IBar extends IFoo { // IFoo is another interface
+    // embedded types
+    struct MyStruct {/*...*/};
+
+    // interface methods
+    create(int32_t id) generates (MyStruct s);
+    close();
+};
+```
+
+不含显式 `extends` 声明的接口会从 `android.hidl.base@1.0::IBase`（类似于 Java 中的 `java.lang.Object`）隐式扩展。隐式导入的 IBase 接口声明了多种不应也不能在用户定义的接口中重新声明或以其他方式使用的预留方法。这些方法包括：
+
+- `ping`
+- `interfaceChain`
+- `interfaceDescriptor`
+- `notifySyspropsChanged`
+- `linkToDeath`
+- `unlinkToDeath`
+- `setHALInstrumentation`
+- `getDebugInfo`
+- `debug`
+- `getHashChain`
+
+### 导入
+
+`import` 语句是用于访问其他软件包中的软件包接口和类型的 HIDL 机制。`import` 语句本身涉及两个实体：
+
+- 导入实体：可以是软件包或接口；以及
+- 被导入实体：也可以是软件包或接口。
+
+导入实体由 `import` 语句的位置决定。当该语句位于软件包的 `types.hal` 中时，导入的内容对整个软件包是可见的；这是软件包级导入。当该语句位于接口文件中时，导入实体是接口本身；这是接口级导入。
+
+被导入实体由 `import` 关键字后面的值决定。该值不必是完全限定名称；如果某个组成部分被删除了，系统会自动使用当前软件包中的信息填充该组成部分。 对于完全限定值，支持的导入情形有以下几种：
+
+- **完整软件包导入**。如果该值是一个软件包名称和版本（语法见下文），则系统会将整个软件包导入至导入实体中。
+
+- 部分导入
+
+  如果值为：
+
+  - 一个接口，则系统会将该软件包的 `types.hal` 和该接口导入至导入实体中。
+  - 在 `types.hal` 中定义的 UDT，则系统仅会将该 UDT 导入至导入实体中（不导入 `types.hal` 中的其他类型）。
+
+- **仅类型导入**。如果该值将上文所述的“部分导入”的语法与关键字 `types` 而不是接口名称配合使用，则系统仅会导入指定软件包的 `types.hal` 中的 UDT。
+
+导入实体可以访问以下各项的组合：
+
+- `types.hal` 中定义的被导入软件包的常见 UDT；
+- 被导入的软件包的接口（完整软件包导入）或指定接口（部分导入），以便调用它们、向其传递句柄和/或从其继承句柄。
+
+导入语句使用完全限定类型名称语法来提供被导入的软件包或接口的名称和版本：
+
+```
+import android.hardware.nfc@1.0;            // import a whole package
+import android.hardware.example@1.0::IQuux; // import an interface and types.hal
+import android.hardware.example@1.0::types; // import just types.hal
+```
+
+### 接口继承
+
+接口可以是之前定义的接口的扩展。扩展可以是以下三种类型中的一种：
+
+- 接口可以向其他接口添加功能，并按原样纳入其 API。
+- 软件包可以向其他软件包添加功能，并按原样纳入其 API。
+- 接口可以从软件包或特定接口导入类型。
+
+接口只能扩展一个其他接口（不支持多重继承）。具有非零 Minor 版本号的软件包中的每个接口必须扩展一个以前版本的软件包中的接口。例如，如果 4.0 版本的软件包 `derivative` 中的接口 `IBar` 是基于（扩展了）1.2 版本的软件包 `original` 中的接口 `IFoo`，并且您又创建了 1.3 版本的软件包 `original`，则 4.1 版本的 `IBar` 不能扩展 1.3 版本的 `IFoo`。相反，4.1 版本的 `IBar` 必须扩展 4.0 版本的 `IBar`，因为后者是与 1.2 版本的 `IFoo` 绑定的。 如果需要，5.0 版本的 `IBar` 可以扩展 1.3 版本的 `IFoo`。
+
+接口扩展并不意味着生成的代码中存在代码库依赖关系或跨 HAL 包含关系，接口扩展只是在 HIDL 级别导入数据结构和方法定义。HAL 中的每个方法必须在相应 HAL 中实现。
+
+### 接口布局总结
+
+总结了如何管理 HIDL 接口软件包（如 `hardware/interfaces`）并整合了整个 HIDL 部分提供的信息。在阅读之前，请务必先熟悉 [HIDL 版本控制](https://source.android.com/devices/architecture/hidl/versioning)、[使用 hidl-gen 添加哈希](https://source.android.com/devices/architecture/hidl/hashing#hidl-gen)中的哈希概念、关于[在一般情况下使用 HIDL](https://source.android.com/devices/architecture/hidl/) 的详细信息以及以下定义：
+
+| 术语                  | 定义                                                         |
+| :-------------------- | :----------------------------------------------------------- |
+| 应用二进制接口 (ABI)  | 应用编程接口 + 所需的任何二进制链接。                        |
+| 完全限定名称 (fqName) | 用于区分 hidl 类型的名称。例如：`android.hardware.foo@1.0::IFoo`。 |
+| 软件包                | 包含 HIDL 接口和类型的软件包。例如：`android.hardware.foo@1.0`。 |
+| 软件包根目录          | 包含 HIDL 接口的根目录软件包。例如：HIDL 接口 `android.hardware` 在软件包根目录 `android.hardware.foo@1.0` 中。 |
+| 软件包根目录路径      | 软件包根目录映射到的 Android 源代码树中的位置。              |
+
+有关更多定义，请参阅 HIDL [术语](https://source.android.com/devices/architecture/hidl/#terms)。
+
+#### 每个文件都可以通过软件包根目录映射及其完全限定名称找到
+
+软件包根目录以参数 `-r android.hardware:hardware/interfaces` 的形式指定给 `hidl-gen`。例如，如果软件包为 `vendor.awesome.foo@1.0::IFoo` 并且向 `hidl-gen` 发送了 `-r vendor.awesome:some/device/independent/path/interfaces`，那么接口文件应该位于 `$ANDROID_BUILD_TOP/some/device/independent/path/interfaces/foo/1.0/IFoo.hal`。
+
+在实践中，建议称为 `awesome` 的供应商或原始设备制造商 (OEM) 将其标准接口放在 `vendor.awesome` 中。在选择了软件包路径之后，不能再更改该路径，因为它已写入接口的 ABI。
+
+#### 软件包路径映射不得重复
+
+例如，如果您有 `-rsome.package:$PATH_A` 和 `-rsome.package:$PATH_B`，则 `$PATH_A` 必须等于 `$PATH_B` 才能实现一致的接口目录（这也能让[接口版本控制起来](https://source.android.com/devices/architecture/hidl/versioning)更简单）。
+
+#### 软件包根目录必须有版本控制文件
+
+如果创建一个软件包路径（如 `-r vendor.awesome:vendor/awesome/interfaces`），则还应创建文件 `$ANDROID_BUILD_TOP/vendor/awesome/interfaces/current.txt`，该文件应包含使用 `hidl-gen`（在[使用 hidl-gen 添加哈希](https://source.android.com/devices/architecture/hidl/hashing#hidl-gen)中广泛进行了讨论）中的 `-Lhash` 选项所创建接口的哈希。
 
 
 
 ## 接口哈希
+
+本文档介绍了 HIDL 接口哈希，该哈希是一种旨在防止意外更改接口并确保接口更改经过全面审查的机制。这种机制是必需的，因为 HIDL 接口带有版本编号，也就是说，接口一经发布便不得再更改，但不会影响应用二进制接口 (ABI) 的情况（例如更正备注）除外。
+
+### 布局
+
+每个软件包根目录（即映射到 `hardware/interfaces` 的 `android.hardware` 或映射到 `vendor/foo/hardware/interfaces` 的 `vendor.foo`）都必须包含一个列出所有已发布 HIDL 接口文件的 `current.txt` 文件。
+
+```
+# current.txt files support comments starting with a ‘#' character
+# this file, for instance, would be vendor/foo/hardware/interfaces/current.txt
+
+# Each line has a SHA-256 hash followed by the name of an interface.
+# They have been shortened in this doc for brevity but they are
+# 64 characters in length in an actual current.txt file.
+d4ed2f0e...995f9ec4 vendor.awesome.foo@1.0::IFoo # comments can also go here
+
+# types.hal files are also noted in types.hal files
+c84da9f5...f8ea2648 vendor.awesome.foo@1.0::types
+
+# Multiple hashes can be in the file for the same interface. This can be used
+# to note how ABI sustaining changes were made to the interface.
+# For instance, here is another hash for IFoo:
+
+# Fixes type where "FooCallback" was misspelled in comment on "FooStruct"
+822998d7...74d63b8c vendor.awesome.foo@1.0::IFoo
+```
+
+> **注意**：为了便于跟踪各个哈希的来源，Google 会将 HIDL `current.txt` 文件分为不同的部分：第一部分列出在 Android O 中发布的接口文件，第二部分列出在 Android O MR1 中发布的接口文件。我们强烈建议在您的 `current.txt` 文件中使用类似布局。
+
+### 使用 hidl-gen 添加哈希
+
+您可以手动将哈希添加到 `current.txt` 文件中，也可以使用 `hidl-gen` 添加。以下代码段提供了可与 `hidl-gen` 搭配使用来管理 `current.txt` 文件的命令示例（哈希已缩短）：
+
+```
+hidl-gen -L hash -r vendor.awesome:vendor/awesome/hardware/interfaces -r android.hardware:hardware/interfaces -r android.hidl:system/libhidl/transport vendor.awesome.nfc@1.0::types
+9626fd18...f9d298a6 vendor.awesome.nfc@1.0::types
+hidl-gen -L hash -r vendor.awesome:vendor/awesome/hardware/interfaces -r android.hardware:hardware/interfaces -r android.hidl:system/libhidl/transport vendor.awesome.nfc@1.0::INfc
+07ac2dc9...11e3cf57 vendor.awesome.nfc@1.0::INfc
+hidl-gen -L hash -r vendor.awesome:vendor/awesome/hardware/interfaces -r android.hardware:hardware/interfaces -r android.hidl:system/libhidl/transport vendor.awesome.nfc@1.0
+9626fd18...f9d298a6 vendor.awesome.nfc@1.0::types
+07ac2dc9...11e3cf57 vendor.awesome.nfc@1.0::INfc
+f2fe5442...72655de6 vendor.awesome.nfc@1.0::INfcClientCallback
+hidl-gen -L hash -r vendor.awesome:vendor/awesome/hardware/interfaces -r android.hardware:hardware/interfaces -r android.hidl:system/libhidl/transport vendor.awesome.nfc@1.0 >> vendor/awesome/hardware/interfaces/current.txt
+```
+
+`hidl-gen` 生成的每个接口定义库都包含哈希，通过调用 `IBase::getHashChain` 可检索这些哈希。`hidl-gen` 编译接口时，会检查 HAL 软件包根目录中的 `current.txt` 文件，以查看 HAL 是否已被更改：
+
+- 如果没有找到 HAL 的哈希，则接口会被视为未发布（处于开发阶段），并且编译会继续进行。
+- 如果找到了相应哈希，则会对照当前接口对其进行检查：
+  - 如果接口与哈希匹配，则编译会继续进行。
+  - 如果接口与哈希不匹配，则编译会暂停，因为这意味着之前发布的接口会被更改。
+    - 要在更改的同时不影响 ABI（请参阅 [ABI 稳定性](https://source.android.com/devices/architecture/hidl/hashing#abi-stability)），请务必先修改 `current.txt` 文件，然后编译才能继续进行。
+    - 所有其他更改都应在接口的 minor 或 major 版本升级中进行。
+
+### ABI 稳定性
+
+**要点**：请仔细阅读并理解本部分。
+
+应用二进制接口 (ABI) 包括二进制关联/调用规范/等等。如果 ABI/API 发生更改，则相应接口就不再适用于使用官方接口编译的常规 `system.img`。
+
+确保接口带有版本编号且 ABI 稳定**至关重要**，具体原因有如下几个：
+
+- 可确保您的实现能够通过供应商测试套件 (VTS) 测试，通过该测试后您将能够正常进行仅限框架的 OTA。
+- 作为原始设备制造商 (OEM)，您将能够提供简单易用且符合规定的板级支持包 (BSP)。
+- 有助于您跟踪哪些接口可以发布。您可以将 `current.txt` 视为接口目录的“地图”，从中了解软件包根目录中提供的所有接口的历史记录和状态。
+
+对于在 `current.txt` 中已有条目的接口，为其添加新的哈希时，请务必仅为可保持 ABI 稳定性的接口添加哈希。请查看以下更改类型：
+
+| 允许的更改   | 更改备注（除非这会更改方法的含义）。更改参数的名称。更改返回参数的名称。更改注释。 |
+| :----------- | ------------------------------------------------------------ |
+| 不允许的更改 | 重新排列参数、方法等…重命名接口或将其移至新的软件包。重命名软件包。在接口的任意位置添加方法/结构体字段等等…会破坏 C++ vtable 的任何更改。等等… |
 
 
 

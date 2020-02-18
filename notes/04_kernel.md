@@ -90,7 +90,7 @@ Android 8.0 中引入的模块化内核要求规定，所有系统芯片 (SoC) �
 
 #### 内核配置选项
 
-为了支持可加载的内核模块，所有常见内核中的 android-base.cfg 都包含以下内核配置选项（或其内核版本等效选项）：
+为了支持可加载的内核模块，所有常见内核中的 [android-base.cfg](./android-base.cfg) 都包含以下内核配置选项（或其内核版本等效选项）：
 
 ```cfg
 CONFIG_MODULES=y

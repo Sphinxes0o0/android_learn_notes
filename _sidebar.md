@@ -4,3 +4,5 @@
 * [3.硬件抽象层](notes/03_hal.md)
 * [4.内核简介](notes/04_kernel.md)
 * [5.HIDL](notes/05_HIDL.md)
+* [6.HIDL(C++)](notes/06_HIDL_Cpp.md)
+* [7.HIDL(Java)](notes/07_HIDL_Java.md)

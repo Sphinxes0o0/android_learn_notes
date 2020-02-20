@@ -1,0 +1,52 @@
+Folder PATH listing for volume DATA
+Volume serial number is 8C25-2F37
+D:.
+│   .nojekyll
+│   index.html
+│   README.md
+│   tree.txt
+│   _sidebar.md
+│   
+└───notes
+    │   01_Architecture.md
+    │   02_modular-system.md
+    │   03_hal.md
+    │   04_kernel.md
+    │   05_HIDL.md
+    │   06_HIDL_Cpp.md
+    │   07_HIDL_Java.md
+    │   08_configuration.md
+    │   09_SystemSuspend.md
+    │   10_dto.md
+    │   11_vndk.md
+    │   12_vintf.md
+    │   13_stable-aidl.md
+    │   14_bootloader.md
+    │   15_java-library.md
+    │   android-base.cfg
+    │   README.md
+    │   tree.txt
+    │   
+    └───imgs
+        ├───01
+        │       android-stack_2x.png
+        │       ape_fwk_all.png
+        │       treble_blog_after.png
+        │       
+        ├───02
+        │       mainline_media_components.png
+        │       modular_system_components_arch.png
+        │       
+        ├───03
+        │       android-diffs.png
+        │       
+        ├───05
+        │       hidl_memoryblock_arch.png
+        │       
+        ├───06
+        │       treble_cpp_compiler_generated_files.png
+        │       treble_cpp_legacy_hal_progression.png
+        │       
+        └───14
+                build-flow-java-lib.png
+                

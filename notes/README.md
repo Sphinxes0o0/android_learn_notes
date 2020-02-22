@@ -1,7 +1,7 @@
-# Android系统文档阅读记录
+# Android系统架构文档
 
-> Android系统文档速读记录
-
+> Android系统架构文档， 仅用于个人搬运，阅读，学习，记录。
+> 相关文档详情和细节请访问官方网站。
 
 
 Github Repo:
@@ -18,12 +18,12 @@ https://github.com/ErickYoo/android_learn_notes
 - [x] 第五章 HIDL
 - [x] 第六章 HIDL(C++)
 - [x] 第七章 HIDL(Java)
-- [ ] 第八章 配置
-- [ ] 第九章 SystemSuspend服务
+- [x] 第八章 配置
+- [x] 第九章 SystemSuspend服务
 - [ ] 第十章 设备树
-- [ ] 第十一章 供应商NDK
+- [x] 第十一章 供应商NDK
 - [ ] 第十二章 供应商接口对象
 - [x] 第十三章 稳定的AIDL
-- [ ] 第十四章 引导加载程序
+- [x] 第十四章 引导加载程序
 - [x] 第十五章 Java SDK 库
 

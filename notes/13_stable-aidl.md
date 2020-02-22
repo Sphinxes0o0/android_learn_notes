@@ -10,7 +10,7 @@ Android 10增加了对稳定的Android接口定义语言（AIDL）的支持，�
 
 的定义`aidl_interface`如下所示：
 
-```
+```protobuf
 aidl_interface {
     name: "my-module-name",
     local_include_dir: "tests_1",
@@ -33,7 +33,7 @@ aidl_interface {
 
 稳定的AIDL中的接口类似于传统的接口，不同之处在于不允许它们使用非结构化的可组合包裹（因为它们不稳定！）。稳定AIDL的主要区别在于包裹的定义方式。以前，包裹是预先*申报的*；在稳定的AIDL中，可包裹字段和变量是明确定义的。
 
-```
+```java
 // in a file like 'some/package/Thing.aidl'
 package some.package;
 
@@ -49,7 +49,7 @@ parcelable SubThing {
 
 将存根库添加为模块的依赖项之后，可以将它们包含在文件中。以下是构建系统中的存根库示例（`Android.mk`也可用于旧版模块定义）：
 
-```
+```protobuf
 cc_... {
     name: ...,
     shared_libs: ["my-module-name-cpp"],
@@ -65,7 +65,7 @@ java_... {
 
 C ++中的示例：
 
-```
+```c++
 #include "some/package/IFoo.h"
 #include "some/package/Thing.h"
 ...
@@ -74,7 +74,7 @@ C ++中的示例：
 
 Java范例：
 
-```
+```java
 import some.package.IFoo;import some.package.Thing;...  // use just like traditional AIDL
 ```
 
@@ -131,7 +131,7 @@ Android 10为稳定的AIDL添加了几种元接口方法。
 
 C ++中的示例：
 
-```
+```c++
 sp<IFoo> foo = ... // the remote object
 int32_t my_ver = IFoo::VERSION;
 int32_t remote_ver = foo->getInterfaceVersion();
@@ -142,7 +142,7 @@ if (remote_ver < my_ver) {
 
 Java范例：
 
-```
+```c++
 IFoo foo = ... // the remote object
 int my_ver = IFoo.VERSION;
 int remote_ver = foo.getInterfaceVersion();
@@ -153,7 +153,7 @@ if (remote_ver < my_ver) {
 
 对于Java语言，远程端必须实现`getInterfaceVersion()`如下：
 
-```
+```java
 class MyFoo extends IFoo.Stub {
     @Override
     public final int getInterfaceVersion() { return IFoo.VERSION; }
@@ -170,7 +170,7 @@ class MyFoo extends IFoo.Stub {
 
 C ++中的示例：
 
-```
+```c++
 class MyDefault : public IFooDefault {
   Status anAddedMethod(...) {
    // do something default
@@ -186,7 +186,7 @@ foo->anAddedMethod(...); // MyDefault::anAddedMethod() will be called if the
 
 Java范例：
 
-```
+```java
 IFoo.Stub.setDefaultImpl(new IFoo.Default() {
     @Override
     public xxx anAddedMethod(...)  throws RemoteException {

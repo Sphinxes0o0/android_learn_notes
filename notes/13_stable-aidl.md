@@ -8,7 +8,7 @@ Android 10增加了对稳定的Android接口定义语言（AIDL）的支持，�
 
 ## 定义AIDL接口
 
-的定义`aidl_interface`如下所示：
+`aidl_interface`的定义如下所示：
 
 ```protobuf
 aidl_interface {

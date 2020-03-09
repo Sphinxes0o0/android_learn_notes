@@ -80,6 +80,7 @@
 	* Activity 管理器，用于管理应用的生命周期，提供常见的导航返回栈
 	* 内容提供程序，可让应用访问其他应用（例如“联系人”应用）中的数据或者共享其自己的数据  
 	
+
 开发者可以完全访问 Android 系统应用使用的框架 API。
 
 * **系统应用**
@@ -95,7 +96,7 @@
 Android 8.0 及更高版本提供了一个稳定的新供应商接口，因此设备制造商可以访问 Android 代码中特定于硬件的部分，这样一来，
 设备制造商只需更新 Android 操作系统框架，即可跳过芯片制造商直接提供新的 Android 版本:
 
-![Android_Updated](imgs\01\treble_blog_after.png)
+![Android_Updated](imgs/01/treble_blog_after.png)
 
 
 ## 1.3 相关资源补充

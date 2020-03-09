@@ -11,6 +11,8 @@ https://github.com/ErickYoo/android_learn_notes
 
 ## 目前进度
 
+### 文档搬运
+
 - [x] 第一章 Android系统架构
 - [x] 第二章 模块化系统组件
 - [x] 第三章 硬件抽象层
@@ -20,9 +22,9 @@ https://github.com/ErickYoo/android_learn_notes
 - [x] 第七章 HIDL(Java)
 - [x] 第八章 配置
 - [x] 第九章 SystemSuspend服务
-- [ ] 第十章 设备树
+- [x] 第十章 设备树
 - [x] 第十一章 供应商NDK
-- [ ] 第十二章 供应商接口对象
+- [x] 第十二章 供应商接口对象
 - [x] 第十三章 稳定的AIDL
 - [x] 第十四章 引导加载程序
 - [x] 第十五章 Java SDK 库
